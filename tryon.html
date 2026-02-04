@@ -1,95 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Jewels-AI | AR Magazine</title>
-    
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
-
-        /* THE SCREEN BUTTON - Attached to your phone screen, not the card */
-        #screen-vto-button {
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        
+        /* THIS BUTTON IS ATTACHED TO THE SCREEN */
+        #fixed-tryon-btn {
             position: fixed;
-            bottom: 30px;
+            bottom: 30px; /* Distance from bottom of screen */
             left: 50%;
             transform: translateX(-50%);
-            width: 85%;
-            max-width: 350px;
-            height: 65px;
-            background: #D4AF37; /* Gold */
+            width: 250px;
+            height: 60px;
+            background: #D4AF37; /* Your Gold Color */
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 18px;
+            border-radius: 10px;
+            font-size: 20px;
             font-weight: bold;
-            z-index: 9999; /* Ensures it sits on top of the camera */
-            display: none; /* Hidden until a jewellery piece is scanned */
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 9999; /* Keeps it on top of the camera */
+            display: none; /* Hidden until card is scanned */
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        #screen-vto-button:active {
-            background: #B8860B;
-            transform: translateX(-50%) scale(0.98);
-        }
-
-        /* Scan UI */
         #ui-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             pointer-events: none; z-index: 100;
         }
-
-        .scan-box {
-            width: 250px; height: 250px; border: 2px dashed #D4AF37; border-radius: 20px;
-        }
+        .scan-box { width: 250px; height: 250px; border: 2px solid #D4AF37; border-radius: 20px; }
     </style>
 </head>
 <body>
 
-    <button id="screen-vto-button" onclick="openTryOn()">
-        <span>Click to Try On Now</span>
-    </button>
+    <button id="fixed-tryon-btn" onclick="goToVTO()">TRY ON NOW</button>
 
     <div id="ui-overlay">
         <div class="scan-box"></div>
     </div>
 
-    <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind;" 
-        vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false">
-        
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-        <a-entity id="jewellery-item" mindar-image-target="targetIndex: 0"></a-entity>
+        
+        <a-entity id="myCard" mindar-image-target="targetIndex: 0"></a-entity>
     </a-scene>
 
     <script>
-        const vtoBtn = document.getElementById('screen-vto-button');
-        const target = document.getElementById('jewellery-item');
+        const btn = document.getElementById('fixed-tryon-btn');
+        const cardTarget = document.getElementById('myCard');
 
-        // When the camera sees the card, show the screen button
-        target.addEventListener("targetFound", () => {
-            console.log("Card Detected");
-            vtoBtn.style.display = "flex";
+        // Show button on screen when card is detected
+        cardTarget.addEventListener("targetFound", () => {
+            btn.style.display = "block";
         });
 
-        // When the card is hidden, hide the screen button
-        target.addEventListener("targetLost", () => {
-            vtoBtn.style.display = "none";
+        // Hide button when card is gone
+        cardTarget.addEventListener("targetLost", () => {
+            btn.style.display = "none";
         });
 
-        function openTryOn() {
-            // Redirects to your VTO site
+        function goToVTO() {
+            // This links to your VTO page
             window.location.href = "https://jewels-ai.online/tryon.html";
         }
     </script>
