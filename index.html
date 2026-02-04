@@ -1,99 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Jewels-AI | AR Magazine</title>
-    
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
         
-        /* 1. The Scanning Overlay - MUST HAVE pointer-events: none */
-        #overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 999; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            /* THIS LINE FIXES THE CLICK ISSUE */
-            pointer-events: none; 
+        /* THE UI BUTTON - Hidden by default */
+        #vto-button {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 50px;
+            background: #D4AF37; /* Gold */
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            z-index: 9999; /* On top of everything */
+            display: none; /* Only shows when target is found */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
         }
 
-        .scan-box {
-            width: 280px; height: 280px; border: 2px solid #D4AF37;
-            border-radius: 30px; animation: pulse 2s infinite;
+        #scanning-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; z-index: 100;
         }
 
-        #overlay p {
-            margin-top: 20px; color: #fff; background: rgba(0,0,0,0.6);
-            padding: 10px 20px; border-radius: 20px; pointer-events: none;
-        }
-
-        /* 2. Loading Screen */
-        #loading {
-            position: absolute; z-index: 1000; width: 100%; height: 100%;
-            background: #fff; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
+        .scan-box { width: 250px; height: 250px; border: 2px solid rgba(212, 175, 55, 0.5); border-radius: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <h2 style="color: #D4AF37;">JEWELS-AI</h2>
-        <p>Opening Camera...</p>
-    </div>
+    <button id="vto-button" onclick="goToVTO()">TRY ON VIRTUAL</button>
 
-    <div id="overlay">
+    <div id="scanning-overlay">
         <div class="scan-box"></div>
-        <p>Scan Jewellery to Try On</p>
     </div>
 
-    <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; uiLoading: #loading; uiScanning: #overlay;" 
-        color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
-        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-        
-        <a-assets>
-            <img id="vtoIcon" src="https://cdn-icons-png.flaticon.com/512/3554/3554657.png">
-        </a-assets>
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
-
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-plane position="0.6 -0.5 0.1" width="0.5" height="0.2" color="#111" opacity="0.9" 
-                     class="clickable" onclick="launchVTO('gold_ring_01')">
-                <a-image src="#vtoIcon" position="-0.15 0 0.01" width="0.1" height="0.1"></a-image>
-                <a-text value="TRY ON" color="#D4AF37" align="center" position="0.08 0 0.01" width="2"></a-text>
-            </a-plane>
-        </a-entity>
-
+        <a-entity id="jewellery-target" mindar-image-target="targetIndex: 0">
+            </a-entity>
     </a-scene>
 
     <script>
-        // Use a simple function for the click
-        function launchVTO(productId) {
-            console.log("Button clicked for: " + productId);
-            // Visual feedback - the screen flashes gold
-            document.body.style.backgroundColor = "#D4AF37";
-            
-            // Redirect to your VTO page
-            setTimeout(() => {
-                window.location.href = `https://jewels-ai.online/tryon.html?product=${productId}`;
-            }, 150);
-        }
+        const vtoButton = document.querySelector('#vto-button');
+        const targetEntity = document.querySelector('#jewellery-target');
 
-        // Detect when the AR is ready to hide loading
-        document.querySelector('a-scene').addEventListener("arReady", () => {
-            document.querySelector('#loading').style.display = "none";
+        // Show the button only when the card is in view
+        targetEntity.addEventListener("targetFound", event => {
+            console.log("Target Found!");
+            vtoButton.style.display = "block";
         });
+
+        // Hide the button when the card is moved away
+        targetEntity.addEventListener("targetLost", event => {
+            console.log("Target Lost");
+            vtoButton.style.display = "none";
+        });
+
+        function goToVTO() {
+            // Your domain and product ID
+            window.location.href = "https://jewels-ai.online/tryon.html?product=gold_set_01";
+        }
     </script>
 </body>
 </html>
