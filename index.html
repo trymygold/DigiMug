@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Jewels-AI | AR Experience</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
+        
+        /* Loading Screen */
+        #loading {
+            position: absolute; z-index: 1001; width: 100%; height: 100%;
+            background: #fff; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+
+        /* Scan Overlay - FIXED: pointer-events: none allows clicks to pass through */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            pointer-events: none; 
+        }
+
+        .scan-box {
+            width: 280px; height: 280px; border: 2px solid #D4AF37;
+            border-radius: 30px; position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        #overlay p {
+            margin-top: 20px; color: #fff; font-size: 14px;
+            background: rgba(0, 0, 0, 0.6); padding: 10px 20px; border-radius: 20px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <h2 style="color: #D4AF37; letter-spacing: 3px;">JEWELS-AI</h2>
+        <p>Loading AR Camera...</p>
+    </div>
+
+    <div id="overlay">
+        <div class="scan-box"></div>
+        <p>Scan the Jewels-AI Card</p>
+    </div>
+
+    <a-scene 
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading: #loading; uiScanning: #overlay;" 
+        color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        
+        <a-assets>
+            <img id="vtoIcon" src="https://cdn-icons-png.flaticon.com/512/3554/3554657.png">
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-plane position="0.5 -0.6 0.1" width="0.5" height="0.18" color="#1a1a1a" opacity="0.9" 
+                     class="clickable" onclick="launchVTO('gold_set_01')">
+                
+                <a-image src="#vtoIcon" position="-0.15 0 0.02" width="0.1" height="0.1"></a-image>
+                <a-text value="TRY ON" color="#D4AF37" align="center" position="0.08 0 0.02" width="2"></a-text>
+            </a-plane>
+        </a-entity>
+
+    </a-scene>
+
+    <script>
+        // Transition to your Jewels-AI VTO page
+        function launchVTO(id) {
+            console.log("Launching VTO for " + id);
+            // Flash effect for feedback
+            document.body.style.backgroundColor = "#D4AF37";
+            setTimeout(() => {
+                window.location.href = `https://jewels-ai.online/tryon.html?product=${id}`;
+            }, 200);
+        }
+
+        // Hide loading screen when AR is ready
+        document.querySelector('a-scene').addEventListener("arReady", () => {
+            document.querySelector('#loading').style.display = "none";
+        });
+    </script>
+</body>
+</html>
