@@ -1,72 +1,269 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jewels-AI Digital Magazine</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        
-        /* THIS BUTTON IS ATTACHED TO THE SCREEN */
-        #fixed-tryon-btn {
-            position: fixed;
-            bottom: 30px; /* Distance from bottom of screen */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 250px;
-            height: 60px;
-            background: #D4AF37; /* Your Gold Color */
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 20px;
-            font-weight: bold;
-            z-index: 9999; /* Keeps it on top of the camera */
-            display: none; /* Hidden until card is scanned */
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        /* Modern Editorial Styling */
+        :root {
+            --gold: #b8860b;
+            --dark-gold: #8b6508;
+            --bg-color: #1a1a1a;
+            --paper-color: #ffffff;
         }
 
-        #ui-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            pointer-events: none; z-index: 100;
+        body {
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Playfair Display', serif;
+            overflow: hidden;
         }
-        .scan-box { width: 250px; height: 250px; border: 2px solid #D4AF37; border-radius: 20px; }
+
+        /* Magazine Container */
+        .magazine-container {
+            width: 90vw;
+            max-width: 450px;
+            height: 80vh;
+            position: relative;
+            perspective: 2000px;
+        }
+
+        /* Individual Page Styling */
+        .page {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--paper-color);
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            border-radius: 0 10px 10px 0;
+            cursor: pointer;
+        }
+
+        .page.flipped {
+            transform: rotateY(-180deg);
+        }
+
+        /* Content Layout (Image, Video, Desc, Button) */
+        .content {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            backface-visibility: hidden;
+            box-sizing: border-box;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .product-video {
+            width: 100%;
+            height: 160px;
+            margin-top: 15px;
+            object-fit: cover;
+            border-radius: 5px;
+            background: #000;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: #222;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--gold);
+            display: inline-block;
+        }
+
+        p {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.5;
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+
+        /* VTN Button */
+        .vtn-btn {
+            background: var(--gold);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .vtn-btn:hover {
+            background: var(--dark-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(184, 134, 11, 0.4);
+        }
+
+        /* Instruction text */
+        .hint {
+            position: fixed;
+            bottom: 20px;
+            color: rgba(255,255,255,0.6);
+            font-family: sans-serif;
+            font-size: 0.8rem;
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <button id="fixed-tryon-btn" onclick="goToVTO()">TRY ON NOW</button>
+<div class="hint">Click pages to flip through the collection</div>
 
-    <div id="ui-overlay">
-        <div class="scan-box"></div>
+<div class="magazine-container" id="magazine">
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        
-        <a-entity id="myCard" mindar-image-target="targetIndex: 0"></a-entity>
-    </a-scene>
-
-    <script>
-        const btn = document.getElementById('fixed-tryon-btn');
-        const cardTarget = document.getElementById('myCard');
-
-        // Show button on screen when card is detected
-        cardTarget.addEventListener("targetFound", () => {
-            btn.style.display = "block";
-        });
-
-        // Hide button when card is gone
-        cardTarget.addEventListener("targetLost", () => {
-            btn.style.display = "none";
-        });
-
-        function goToVTO() {
-            // This links to your VTO page
-            window.location.href = "https://jewels-ai.online/tryon.html";
+<script>
+    const magazine = document.getElementById('magazine');
+    
+    /**
+     * PRODUCT DATA ARRAY
+     * Replace these links with your actual GitHub assets or Cloudinary URLs.
+     */
+    const products = [
+        {
+            title: "Traditional Haram",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+1",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4", // Placeholder video
+            desc: "A timeless masterpiece featuring intricate temple architecture motifs in 22k gold.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Diamond Choker",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+2",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Radiate elegance with our brilliant-cut diamond choker designed for modern royalty.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Antique Bangles",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+3",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Handcrafted bangles featuring rubies and emeralds set in a vintage matte finish.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Bridal Jhumkas",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+4",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "The perfect pair of heavy gold jhumkas to complete your traditional wedding look.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Modern Solitaire",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+5",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Simplistic luxury. A single high-carat diamond set in polished platinum.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Peacock Kada",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+6",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Bold peacock design with enamel work, a statement piece for any celebration.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Pearl Symphony",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+7",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Lustrous freshwater pearls combined with delicate gold chains for a soft look.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Emerald Drops",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+8",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Deep green emeralds that catch the light from every angle. Pure sophistication.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Rose Gold Band",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+9",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "A sleek rose gold band with hidden diamonds, perfect for daily wear.",
+            link: "https://jewels-ai.online/vtn"
+        },
+        {
+            title: "Royal Maang Tikka",
+            img: "https://via.placeholder.com/400x250?text=Jewelry+10",
+            video: "https://www.w3schools.com/html/mov_bbb.mp4",
+            desc: "Traditional head ornament featuring Kemp stones and gold bead hangings.",
+            link: "https://jewels-ai.online/vtn"
         }
-    </script>
+    ];
+
+    const totalPages = products.length;
+
+    // Create pages dynamically
+    products.forEach((product, index) => {
+        const page = document.createElement('div');
+        page.className = 'page';
+        page.style.zIndex = totalPages - index;
+
+        page.innerHTML = `
+            <div class="content">
+                <img src="${product.img}" class="product-img" alt="Product">
+                <video class="product-video" autoplay muted loop playsinline>
+                    <source src="${product.video}" type="video/mp4">
+                </video>
+                <h2>${product.title}</h2>
+                <p>${product.desc}</p>
+                <button class="vtn-btn" onclick="event.stopPropagation(); window.open('${product.link}', '_blank');">
+                    Try On Me
+                </button>
+            </div>
+        `;
+
+        // Flip event
+        page.addEventListener('click', function() {
+            this.classList.toggle('flipped');
+            updateZIndex();
+        });
+
+        magazine.appendChild(page);
+    });
+
+    // Fix Z-index during flipping to ensure pages stack correctly
+    function updateZIndex() {
+        const pageElements = document.querySelectorAll('.page');
+        pageElements.forEach((el, i) => {
+            if (el.classList.contains('flipped')) {
+                el.style.zIndex = i + 1;
+            } else {
+                el.style.zIndex = totalPages - i;
+            }
+        });
+    }
+</script>
+
 </body>
 </html>
